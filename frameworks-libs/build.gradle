@@ -1,0 +1,2 @@
+configurations.maybeCreate("default")
+artifacts.add("default", file('framework-android-9.0.0_r37.jar'))

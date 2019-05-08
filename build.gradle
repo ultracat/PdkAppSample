@@ -1,0 +1,110 @@
+buildscript {
+    repositories {
+        google()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.1.3'
+    }
+}
+apply plugin: 'com.android.application'
+repositories {
+    google()
+    jcenter()
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+    // Adds a prefix to the search path for bootstrap classes.
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            options.compilerArgs.add('-Xbootclasspath/p:frameworks-libs/framework-android-9.0.0_r37.jar')
+        }
+    }
+
+}
+android {
+
+    signingConfigs {
+        PdkAppSampleRelease {
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+            storeFile file('keystore/aosp_platform_key.jks')
+            storePassword 'android'
+        }
+    }
+
+    compileSdkVersion 28
+    defaultConfig {
+        applicationId "com.ultracat.sample.pdkappsample"
+        minSdkVersion 22
+        targetSdkVersion 24
+        def time = new Date().format("yyyyMMdd")
+        def versionFromDate = Integer.valueOf(time)
+
+        versionCode versionFromDate
+        versionName "0.1-${time}"
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.PdkAppSampleRelease
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            applicationVariants.all { variant ->
+                variant.outputs.all {
+                    def time = new Date().format("hhmmss")
+                    outputFileName = "PdkAppSample-${variant.buildType.name}-${defaultConfig.versionName}-${time}.apk"
+                }
+            }
+        }
+        debug {
+            signingConfig signingConfigs.PdkAppSampleRelease
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            res.srcDirs = ['res']
+            aidl.srcDirs = ['src/aidl']
+        }
+    }
+    productFlavors {
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    compileOnly project(':frameworks-libs')
+    implementation project(':my-libs')
+    implementation 'com.android.support:support-v4:28.0.0'
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+}
+
+preBuild {
+
+    doLast {
+        def imlFile = file(project.name + ".iml")
+        println 'Change ' + project.name + '.iml order'
+        try {
+            def parsedXml = (new XmlParser()).parse(imlFile)
+            def jdkNode = parsedXml.component[1].orderEntry.find { it.'@type' == 'jdk' }
+            parsedXml.component[1].remove(jdkNode)
+            def sdkString = "Android API " + android.compileSdkVersion.substring("android-".length()) + " Platform"
+            new Node(parsedXml.component[1], 'orderEntry', ['type': 'jdk', 'jdkName': sdkString, 'jdkType': 'Android SDK'])
+            groovy.xml.XmlUtil.serialize(parsedXml, new FileOutputStream(imlFile))
+        } catch (FileNotFoundException e) {
+            // nop, iml not found
+            println "no iml found"
+        }
+    }
+}
