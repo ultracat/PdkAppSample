@@ -29,7 +29,9 @@ LOCAL_STATIC_ANDROID_LIBRARIES := \
     android-support-v7-preference \
     android-support-v7-appcompat \
     android-support-transition \
-    android-support-v14-preference
+    android-support-v14-preference \
+		car-media-common \
+		SettingLib
 
 include $(BUILD_PACKAGE)
 
