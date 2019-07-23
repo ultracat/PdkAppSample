@@ -14,8 +14,12 @@ LOCAL_CERTIFICATE := platform
 LOCAL_MODULE_TAGS := optional
 LOCAL_PRIVILEGED_MODULE := true
 LOCAL_DEX_PREOPT := false
-LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 LOCAL_MANIFEST_FILE := AndroidManifest.xml
+ifneq ($(filter model_%, $(TARGET_PRODUCT)),)
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
+else
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
+endif
 
 LOCAL_JAVA_LIBRARIES :=
 

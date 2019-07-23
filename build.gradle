@@ -24,12 +24,16 @@ allprojects {
             options.compilerArgs.add('-Xbootclasspath/p:frameworks-libs/framework-android-9.0.0_r37.jar')
         }
     }
-
 }
+
+static def getDate() {
+    return new Date().format("YYMMdd_HHmm", TimeZone.getTimeZone("GMT"))
+}
+
 android {
 
     signingConfigs {
-        PdkAppSampleRelease {
+        system {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
             storeFile file('keystore/aosp_platform_key.jks')
@@ -46,23 +50,22 @@ android {
         def versionFromDate = Integer.valueOf(time)
 
         versionCode versionFromDate
-        versionName "0.1-${time}"
+        versionName "0.1-${getDate()}"
     }
 
-    buildTypes {
-        release {
-            signingConfig signingConfigs.PdkAppSampleRelease
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            applicationVariants.all { variant ->
-                variant.outputs.all {
-                    def time = new Date().format("hhmmss")
-                    outputFileName = "PdkAppSample-${variant.buildType.name}-${defaultConfig.versionName}-${time}.apk"
-                }
-            }
+    flavorDimensions "platform"
+
+    productFlavors {
+        prj1 {
+            dimension "platform"
+            versionName "${name}-${defaultConfig.versionName}"
+            signingConfig signingConfigs.system
         }
-        debug {
-            signingConfig signingConfigs.PdkAppSampleRelease
+
+        prj2 {
+            dimension "platform"
+            versionName "${name}-${defaultConfig.versionName}"
+            signingConfig signingConfigs.system
         }
     }
 
@@ -70,16 +73,41 @@ android {
         main {
             manifest.srcFile 'AndroidManifest.xml'
             java.srcDirs = ['src']
-            res.srcDirs = ['res']
             aidl.srcDirs = ['src/aidl']
         }
+        prj2 {
+            res.srcDirs = ['res-prj2']
+        }
+        prj1 {
+            res.srcDirs = ['res']
+        }
     }
-    productFlavors {
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.system
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            applicationVariants.all { variant ->
+                variant.outputs.all {
+                    outputFileName = "PdkAppSample-${variant.flavorName}_${variant.buildType.name}_${defaultConfig.versionName}.apk"
+                }
+            }
+        }
+        debug {
+            signingConfig signingConfigs.system
+        }
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        //If you want to continue even if errors found use following line
+        abortOnError false
     }
 }
 
